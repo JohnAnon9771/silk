@@ -142,6 +142,16 @@ module Silk
         end
        
         @source_cache[source] = img
+        
+        if layer.trim
+          # find_trim returns [left, top, width, height]
+          # We crop the image to those dimensions
+          # Default threshold is 10. We can expose this later if needed.
+          # Default background is top-left pixel, which works for transparent images.
+          left, top, w, h = img.find_trim(threshold: 10) 
+          img = img.crop(left, top, w, h)
+        end
+        
         img
       end
     end

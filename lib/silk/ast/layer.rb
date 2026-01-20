@@ -35,6 +35,10 @@ module Silk
         properties[:gravity] || :centre
       end
 
+      def trim
+        properties[:trim]
+      end
+
       def effects
         @effects ||= []
       end
