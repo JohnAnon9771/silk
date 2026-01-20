@@ -41,6 +41,14 @@ module Silk
         @layer.properties[:trim] = value
       end
       
+      ### Styles
+      def use(style_name)
+        block = Silk.styles[style_name]
+        raise ArgumentError, "Style '#{style_name}' not defined" unless block
+        
+        evaluate(&block)
+      end
+      
       alias_method :blend_mode, :blend
 
       def displace(map:, scale: 20, **options)
