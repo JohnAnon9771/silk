@@ -34,6 +34,14 @@ module Silk
       def gravity
         properties[:gravity] || :centre
       end
+
+      def effects
+        @effects ||= []
+      end
+
+      def add_effect(effect)
+        effects << effect
+      end
     end
   end
 end
