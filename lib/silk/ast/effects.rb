@@ -10,7 +10,6 @@ module Silk
 
     class DisplacementEffect < Effect
       def scale
-        # Support scalar or [x, y]
         properties[:scale] || 20
       end
     end
@@ -22,6 +21,25 @@ module Silk
       
       def strength
         properties[:strength] || 1.0
+      end
+    end
+
+    class BlurEffect < Effect
+      def radius
+        properties[:radius] || 0
+      end
+    end
+
+    class GrayscaleEffect < Effect
+    end
+
+    class ColorAdjustmentEffect < Effect
+      def brightness
+        properties[:brightness] || 1.0
+      end
+      
+      def contrast
+        properties[:contrast] || 1.0
       end
     end
   end

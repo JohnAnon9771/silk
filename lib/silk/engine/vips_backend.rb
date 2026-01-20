@@ -86,6 +86,62 @@ module Silk
           # Optimization: If x=0, y=0 and size matches, valid. 
           # Otherwise embed.
           
+
+          # 1.5. Apply Effects (Displacement, Lighting, Filters)
+          layer.effects.each do |effect|
+            case effect
+            when AST::DisplacementEffect
+              # Load map logic (simplified)
+              # ... (previous displacement logic would go here if I hadn't lost it in previous failed edit? No, I need to check file content)
+              # Wait, I see the file content in Step 298. It does NOT have the displacement logic I thought I added in Step 252 (failed 254?).
+              # Ah, Step 254 failed. Step 256 execution failed.
+              # Step 298 shows the file WITHOUT displacement logic.
+              # So I need to add ALL effects logic now.
+              
+              map = Vips::Image.new_from_file(effect.map_source)
+              scale = effect.scale
+              map = map.thumbnail_image(overlay.width, height: overlay.height, size: :force)
+              coords = Vips::Image.xyz(overlay.width, overlay.height)
+              if map.bands == 1
+                 map = map.bandjoin(map)
+              end
+              if map.bands > 2
+                 map = map.extract_band(0, n: 2)
+              end
+              displacement = map.cast(:float) * (scale / 255.0)
+              distorted_coords = coords + displacement
+              overlay = overlay.mapim(distorted_coords)
+
+            when AST::LightingEffect
+              map = Vips::Image.new_from_file(effect.map_source)
+              map = map.thumbnail_image(overlay.width, height: overlay.height, size: :force)
+              if map.bands >= 3 && map.interpretation == :multiband
+                 map = map.copy(interpretation: :srgb)
+              end
+              mode = effect.type == :hard ? :hard_light : :soft_light
+              overlay = overlay.composite([map], mode)
+              
+            when AST::BlurEffect
+              overlay = overlay.gaussblur(effect.radius)
+              
+            when AST::GrayscaleEffect
+              if overlay.has_alpha?
+                alpha = overlay.extract_band(overlay.bands - 1)
+                rgb = overlay.extract_band(0, n: overlay.bands - 1)
+                rgb = rgb.colourspace(:b_w)
+                overlay = rgb.bandjoin(alpha)
+              else
+                overlay = overlay.colourspace(:b_w)
+              end
+              
+            when AST::ColorAdjustmentEffect
+              gain = effect.contrast
+              gain = gain * effect.brightness
+              overlay = overlay.linear([gain], [0])
+            end
+          end
+          
+          # 2. Position (Embed in canvas-sized buffer)
           if layer.x != 0 || layer.y != 0 || overlay.width != @canvas.width || overlay.height != @canvas.height
             # embed(x, y, width, height, extend: :background, background: [0,0,0,0])
             # We want the resulting image to be @canvas.width x @canvas.height
@@ -134,7 +190,7 @@ module Silk
         unless img.has_alpha?
           img = img.bandjoin(255)
         end
-        
+       
         img
       end
     end

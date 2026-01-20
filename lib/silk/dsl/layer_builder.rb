@@ -18,7 +18,21 @@ module Silk
         effect = AST::LightingEffect.new(map: map, **options)
         @layer.add_effect(effect)
       end
-      
+
+      def blur(radius:)
+        effect = AST::BlurEffect.new(radius: radius)
+        @layer.add_effect(effect)
+      end
+
+      def grayscale
+        effect = AST::GrayscaleEffect.new
+        @layer.add_effect(effect)
+      end
+
+      def adjust_color(**options)
+        effect = AST::ColorAdjustmentEffect.new(**options)
+        @layer.add_effect(effect)
+      end      
       # Allow setting properties inside the block too? 
       # e.g. width 100
       # For now, let's strictly keep to adding effects and children (if we had nested layers).
