@@ -1,20 +1,24 @@
 require 'vips'
 
-# Create a red square 500x500
-# Linear `a * img + b`. 
-# We want Red (255,0,0). So start with black (0), multiply by 1, add [255, 0, 0].
+# Base: Red
 base = Vips::Image.black(500, 500, bands: 3)
                   .linear([1], [255, 0, 0])
-                  .bandjoin(255) # Add alpha: 255 (opaque)
+                  .bandjoin(255)
                   .cast(:uchar)
 base.write_to_file("base.png")
 
-# Create a blue circle (approx) or smaller square 200x200
+# Overlay: Blue
 overlay = Vips::Image.black(200, 200, bands: 3)
                      .linear([1], [0, 0, 255])
-                     .bandjoin(128) # Add alpha: 128 (semi-transparent)
+                     .bandjoin(255) # Opaque to test blend
                      .cast(:uchar)
-overlay.write_to_file("overlay.png")
+overlay.write_to_file("blue_square.png")
 
+# Overlay: 50% Grey
+grey = Vips::Image.black(200, 200, bands: 3)
+                  .linear([1], [128, 128, 128])
+                  .bandjoin(255)
+                  .cast(:uchar)
+grey.write_to_file("grey_square.png")
 
-puts "Assets generated: base.png, overlay.png"
+puts "Assets generated: base.png, blue_square.png, grey_square.png"

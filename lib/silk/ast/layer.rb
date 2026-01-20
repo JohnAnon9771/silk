@@ -6,6 +6,10 @@ module Silk
       def source
         properties[:source]
       end
+
+      def blend_mode
+        properties[:blend] || :over
+      end
     end
   end
 end

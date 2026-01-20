@@ -58,6 +58,7 @@ module Silk
 
       def add_layer(source, options)
         # We need a Layer node. I should create it next.
+        # options now includes :blend if passed
         node = AST::Layer.new(source: source, **options)
         @canvas.add_child(node)
       end

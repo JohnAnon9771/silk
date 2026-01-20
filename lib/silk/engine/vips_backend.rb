@@ -36,13 +36,28 @@ module Silk
              overlay = overlay.copy(interpretation: :srgb)
           end
 
-          bg.composite([overlay], :over)
+          mode = map_blend_mode(layer.blend_mode)
+          bg.composite([overlay], mode)
         end
         
         final_image
       end
 
       private
+
+      def map_blend_mode(mode)
+        # Map Silk symbols to Vips composite modes
+        # Vips uses :VIPS_BLEND_MODE_... but in ruby-vips it's usually just the symbol or int.
+        # Check Vips::BlendMode enum or string.
+        # Actually composite accepts integers/enums. 
+        # :over is standard.
+        # :multiply -> :multiply
+        # :screen -> :screen
+        # :overlay -> :overlay
+        # etc. Libvips mostly matches standard names.
+        
+        mode
+      end
 
       def load_layer(layer)
         source = layer.source
