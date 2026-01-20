@@ -1,3 +1,6 @@
+require_relative "../ast/node"
+require_relative "../ast/effects"
+
 module Silk
   module DSL
     class LayerBuilder
@@ -8,6 +11,37 @@ module Silk
       def evaluate(&block)
         instance_eval(&block) if block_given?
       end
+      
+      # Properties
+      def x(value)
+        @layer.properties[:x] = value
+      end
+
+      def y(value)
+        @layer.properties[:y] = value
+      end
+
+      def width(value)
+        @layer.properties[:width] = value
+      end
+
+      def height(value)
+        @layer.properties[:height] = value
+      end
+      
+      def fit(value)
+        @layer.properties[:fit] = value
+      end
+      
+      def blend(value)
+        @layer.properties[:blend] = value
+      end
+      
+      def trim(value)
+        @layer.properties[:trim] = value
+      end
+      
+      alias_method :blend_mode, :blend
 
       def displace(map:, scale: 20, **options)
         effect = AST::DisplacementEffect.new(map: map, scale: scale, **options)
@@ -33,9 +67,6 @@ module Silk
         effect = AST::ColorAdjustmentEffect.new(**options)
         @layer.add_effect(effect)
       end      
-      # Allow setting properties inside the block too? 
-      # e.g. width 100
-      # For now, let's strictly keep to adding effects and children (if we had nested layers).
     end
   end
 end

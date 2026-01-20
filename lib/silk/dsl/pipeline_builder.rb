@@ -45,30 +45,16 @@ module Silk
 
       private
 
-      def add_layer(source, options)
+      def add_layer(source, options, &block)
         # options now includes :blend if passed
-        # We need to extract the block if user passed one to add_layer
-        # But add_layer in PipelineBuilder helper doesn't accept block in my previous signature?
-        # wait, `layer "msg" do ... end` passes block to `layer`.
-        # I need to pass it here.
-        
-        # NOTE: PipelineBuilder methods (layer, template, etc) need to capture &block and pass it here.
-        # But I modified `add_layer` signature? No, I need to check caller.
-        
-        # Let's fix `add_layer` signature in `PipelineBuilder` first. (DSL layer).
-        # Actually `add_layer` is private called by `layer`.
-        # `layer` captures block. I need to handle it.
         
         node = AST::Layer.new(source: source, **options)
         @canvas.add_child(node)
         
-        # If a block was given to the caller of this, we need to execute it with LayerBuilder
-        # But `add_layer` implementation in previous step was:
-        # def add_layer(source, options) ... end
-        # The caller `layer`, `template` etc need to pass the block.
-        
-        # I will assume the caller does `add_layer(source, options, &block)`
-        # I need to update those call sites in `PipelineBuilder`.
+        # Evaluate block with LayerBuilder if provided
+        if block_given?
+          LayerBuilder.new(node).evaluate(&block)
+        end
       end
     end
   end
