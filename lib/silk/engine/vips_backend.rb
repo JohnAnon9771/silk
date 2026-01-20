@@ -9,9 +9,6 @@ module Silk
       end
 
       def call
-        # Initialize background (transparent or colored)
-        # Vips logic: Create black image, join with alpha?
-        # For simplicity MVP: Black background
         width = @canvas.width
         height = @canvas.height
         
@@ -21,40 +18,29 @@ module Silk
                                 .copy(interpretation: :srgb)
                                 .bandjoin(255) # Add solid alpha
 
-        # Composite layers
-        final_image = @canvas.children.reduce(background) do |bg, layer|
+        # Collect separate arrays for batch composite
+        overlays = []
+        modes = []
+        xs = []
+        ys = []
+
+        @canvas.children.each do |layer|
           overlay = load_layer(layer)
           
-          # Center the overlay for now, or just 0,0
-          # Composite expects array of images and mode.
-          # We need to handle resizing/placement later.
-          # For MVP: just composite on top (0,0)
-          
-          # Ensure overlay is treated as srgb (if it's 3 or 4 bands)
-          # If inputs differ in interpretation, Vips tries to convert.
-          # 'multiband' -> 'srgb' conversion fails if it doesn't know how.
+          # Ensure sRGB
           if overlay.bands >= 3 && overlay.interpretation == :multiband
              overlay = overlay.copy(interpretation: :srgb)
           end
 
           # 1. Resize if needed
           if layer.width || layer.height
-             # Use Vips thumbnail if we have a file source (it's faster/better), 
-             # but we loaded 'overlay' as an Image object. 
-             # Vips::Image#thumbnail_image is available for in-memory images too.
-             
              target_width = layer.width || overlay.width
              target_height = layer.height || overlay.height
              
-             # Decode 'fit' mode to Vips size/crop options
-             # Silk defaults: fit: :contain (default Vips behavior), :cover, :fill
-             
              size_mode = :both 
-
              crop_mode = :none
              if layer.fit == :cover
                crop_mode = :centre # Default gravity
-               # Todo: Map layer.gravity to Vips gravity (:centre, :north, etc)
              end
 
              if layer.fit == :fill
@@ -64,10 +50,7 @@ module Silk
                 scale_y = target_height.to_f / overlay.height
                 overlay = overlay.resize(scale_x, vscale: scale_y)
              else
-                # Use thumbnail_image for :contain (default) and :cover
-                # height is mandatory for thumbnail_image if we want specific box?
-                # thumbnail_image(width, height: ..., size: ..., crop: ...)
-                
+                # contain / cover
                 overlay = overlay.thumbnail_image(target_width, 
                                                   height: target_height, 
                                                   size: size_mode, 
@@ -76,7 +59,7 @@ module Silk
           end
 
           # 1.5. Apply Effects (Displacement, Lighting, Filters)
-          # These must be applied BEFORE positioning (embed)
+          # These must be applied BEFORE compositing onto background
           layer.effects.each do |effect|
             case effect
             when AST::DisplacementEffect
@@ -126,52 +109,23 @@ module Silk
             end
           end
 
-          # 2. Position (Embed in canvas-sized buffer)
-          # We need to place 'overlay' at x,y onto a transparent canvas of size @canvas.width/height
-          # AND then composite that onto bg? 
-          # OR just composite at offset?
-          # Vips `composite` aligns to 0,0 of the inputs.
-          # So strictly, we should embed overlay into a full-size transparent buffer.
-          
-          # Optimization: If x=0, y=0 and size matches, valid. 
-          # Otherwise embed.
-          
-          if layer.x != 0 || layer.y != 0 || overlay.width != @canvas.width || overlay.height != @canvas.height
-            # embed(x, y, width, height, extend: :background, background: [0,0,0,0])
-            # We want the resulting image to be @canvas.width x @canvas.height
-            # The 'overlay' is placed at x,y inside this box.
-            
-            # Vips embed: x, y, width, height.
-            # x, y are position of the input image relative to the output?
-            # No, embed expands the canvas. 
-            # documentation: "embed image in a larger image"
-            # embed(x, y, width, height)
-            # x, y: position of the old image within the new image.
-            
-            overlay = overlay.embed(layer.x, layer.y, @canvas.width, @canvas.height, 
-                                    extend: :background, background: [0,0,0,0])
-          end
-
-          mode = map_blend_mode(layer.blend_mode)
-          bg.composite([overlay], mode)
+          # Add to batch lists
+          overlays << overlay
+          modes << map_blend_mode(layer.blend_mode)
+          xs << (layer.x || 0)
+          ys << (layer.y || 0)
         end
         
-        final_image
+        # Batch composite all layers onto background
+        return background if overlays.empty?
+        
+        background.composite(overlays, modes, x: xs, y: ys)
       end
 
       private
 
       def map_blend_mode(mode)
         # Map Silk symbols to Vips composite modes
-        # Vips uses :VIPS_BLEND_MODE_... but in ruby-vips it's usually just the symbol or int.
-        # Check Vips::BlendMode enum or string.
-        # Actually composite accepts integers/enums. 
-        # :over is standard.
-        # :multiply -> :multiply
-        # :screen -> :screen
-        # :overlay -> :overlay
-        # etc. Libvips mostly matches standard names.
-        
         mode
       end
 
