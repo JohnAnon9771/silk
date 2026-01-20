@@ -10,6 +10,30 @@ module Silk
       def blend_mode
         properties[:blend] || :over
       end
+
+      def x
+        properties[:x] || 0
+      end
+
+      def y
+        properties[:y] || 0
+      end
+
+      def width
+        properties[:width]
+      end
+
+      def height
+        properties[:height]
+      end
+
+      def fit
+        properties[:fit]
+      end
+
+      def gravity
+        properties[:gravity] || :centre
+      end
     end
   end
 end
