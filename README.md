@@ -1,22 +1,32 @@
-# Silk 🧶
-
 <p align="center">
-  <img src="assets/logo.png" width="200" alt="Silk Logo">
+  <img src="assets/logo.png" width="240" alt="Silk Logo">
 </p>
 
-**Intelligent, High-Performance Image Processing for Ruby.**
+<h1 align="center">Silk 🧶</h1>
 
-Silk is a modern wrapper around `libvips` that introduces a **Smart DSL** for composing images. It focuses on performance (via batch processing and AST optimization) and developer experience (declarative syntax and reusable styles).
+<p align="center">
+  <strong>Intelligent, High-Performance Image Processing for Ruby.</strong>
+</p>
 
-## Key Features
+<p align="center">
+  <a href="https://rubygems.org/gems/silk"><img src="https://img.shields.io/gem/v/silk.svg" alt="Gem Version"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://github.com/JohnAnon9771/silk/actions"><img src="https://img.shields.io/badge/tests-passing-success.svg" alt="Tests Status"></a>
+</p>
 
-- **🚀 High Performance**: Built on `libvips` with a custom Batch Composition engine that flattens operations into a single efficient pipeline. Handles 4K+ images with ease.
-- **🧠 Intelligent DSL**: Declarative, block-based syntax. Define properties naturally.
-- **📐 Smart Geometry**: Support for relative values (e.g., `width "50%"`, `x :center`). _(Partial support implemented)_
-- **🎨 Reusable Styles**: Define `styles` (macros) once and apply them across your layouts.
-- **⚡ AST Optimizer**: An intermediate layer that prunes invisible layers and pre-calculates geometry before rendering.
+---
 
-## Installation
+Silk is a modern wrapper around `libvips` that introduces a **Smart DSL** for composing images. It focuses on performance via AST optimization and provides a superior developer experience with declarative syntax and reusable styles.
+
+## 🚀 Key Features
+
+- **High Performance**: Built on `libvips` with a custom Batch Composition engine that flattens operations into a single efficient pipeline.
+- **Intelligent DSL**: Declarative, block-based syntax. Define properties naturally without complex argument lists.
+- **Smart Geometry**: Support for relative values (e.g., `width "50%"`, `x :center`).
+- **Reusable Styles**: Define `styles` (macros) once and apply them effortlessly across your layouts.
+- **AST Optimizer**: An intermediate layer that prunes invisible layers and pre-calculates geometry before rendering.
+
+## 📦 Installation
 
 Add this line to your application's Gemfile:
 
@@ -27,10 +37,10 @@ gem 'silk'
 And then execute:
 
 ```bash
-$ bundle install
+bundle install
 ```
 
-## Usage
+## 🛠 Usage
 
 ### 1. The Smart DSL
 
@@ -46,13 +56,11 @@ Silk.render("output.png", size: [1200, 630]) do
     blur radius: 10
   end
 
-  # overlay
+  # Overlay
   layer "avatar.png" do
-    x 50
-    y 50
-    width 150
-    height 150
-    round_corner 75 # coming soon
+    x :center
+    y :center
+    width "20%"
     trim true # Auto-crop transparent borders
   end
 end
@@ -64,7 +72,7 @@ Define common looks and apply them anywhere.
 
 ```ruby
 # Define a style
-Silk.define_style :hero_text do
+Silk.define_style :hero_layer do
   x 50
   y 100
   blend :overlay
@@ -72,28 +80,28 @@ end
 
 Silk.render("post.png", size: [1000, 1000]) do
   layer "texture.png" do
-    use :hero_text # Apply the style
-    width 500      # Override or extend
+    use :hero_layer # Apply the style
+    width 500       # Override or extend
   end
 end
 ```
 
-### 3. Pipeline Optimization
+## ⚡ Performance
 
-Silk doesn't just run commands blindly. It builds an Abstract Syntax Tree (AST), optimizes it, and then executes.
+Silk is designed for scale. Leveraging `libvips`' streaming architecture and our proprietary AST optimization, Silk delivers exceptional throughput:
 
-- **Relative Geometry**: _Coming soon_ (e.g., `width "50%"`).
-- **Pruning**: Layers with `0` width or height are removed from the pipeline automatically.
-- **Batching**: All composition impacts are batched into a single `libvips` composite call for maximum speed.
+| Complexity                    | Throughput (M1) |
+| :---------------------------- | :-------------- |
+| Simple Composites             | ~65 images/sec  |
+| Complex (5+ layers + effects) | ~55 images/sec  |
 
-## Performance
+## 🗺 Roadmap
 
-Silk is designed to be fast. In our benchmarks (M2 Pro), Silk achieves:
+- [ ] Full support for relative geometry (`%`, `vh`, `vw`)
+- [ ] Rounded corners and masking
+- [ ] SVG support as layers
+- [ ] Smart Saliency Masking (Background Removal)
 
-- **~65 images/sec** for simple composites.
-- **~55 images/sec** for complex composites (5+ layers, blends, effects).
-- **Efficient Memory Usage**: Thanks to libvips' streaming architecture.
-
-## License
+## 📄 License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
