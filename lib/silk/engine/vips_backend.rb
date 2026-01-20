@@ -5,6 +5,7 @@ module Silk
     class VipsBackend
       def initialize(canvas)
         @canvas = canvas
+        @source_cache = {}
       end
 
       def call
@@ -48,8 +49,6 @@ module Silk
              # Decode 'fit' mode to Vips size/crop options
              # Silk defaults: fit: :contain (default Vips behavior), :cover, :fill
              
-             size_mode = :down # Default to downscaling only? Or :both? Vips default is :down.
-             # If user specifies size, they probably want that size even if upscaling.
              size_mode = :both 
 
              crop_mode = :none
@@ -76,38 +75,24 @@ module Silk
              end
           end
 
-          # 2. Position (Embed in canvas-sized buffer)
-          # We need to place 'overlay' at x,y onto a transparent canvas of size @canvas.width/height
-          # AND then composite that onto bg? 
-          # OR just composite at offset?
-          # Vips `composite` aligns to 0,0 of the inputs.
-          # So strictly, we should embed overlay into a full-size transparent buffer.
-          
-          # Optimization: If x=0, y=0 and size matches, valid. 
-          # Otherwise embed.
-          
-
           # 1.5. Apply Effects (Displacement, Lighting, Filters)
+          # These must be applied BEFORE positioning (embed)
           layer.effects.each do |effect|
             case effect
             when AST::DisplacementEffect
               # Load map logic (simplified)
-              # ... (previous displacement logic would go here if I hadn't lost it in previous failed edit? No, I need to check file content)
-              # Wait, I see the file content in Step 298. It does NOT have the displacement logic I thought I added in Step 252 (failed 254?).
-              # Ah, Step 254 failed. Step 256 execution failed.
-              # Step 298 shows the file WITHOUT displacement logic.
-              # So I need to add ALL effects logic now.
-              
               map = Vips::Image.new_from_file(effect.map_source)
               scale = effect.scale
               map = map.thumbnail_image(overlay.width, height: overlay.height, size: :force)
               coords = Vips::Image.xyz(overlay.width, overlay.height)
+              
               if map.bands == 1
                  map = map.bandjoin(map)
               end
               if map.bands > 2
                  map = map.extract_band(0, n: 2)
               end
+              
               displacement = map.cast(:float) * (scale / 255.0)
               distorted_coords = coords + displacement
               overlay = overlay.mapim(distorted_coords)
@@ -140,8 +125,17 @@ module Silk
               overlay = overlay.linear([gain], [0])
             end
           end
-          
+
           # 2. Position (Embed in canvas-sized buffer)
+          # We need to place 'overlay' at x,y onto a transparent canvas of size @canvas.width/height
+          # AND then composite that onto bg? 
+          # OR just composite at offset?
+          # Vips `composite` aligns to 0,0 of the inputs.
+          # So strictly, we should embed overlay into a full-size transparent buffer.
+          
+          # Optimization: If x=0, y=0 and size matches, valid. 
+          # Otherwise embed.
+          
           if layer.x != 0 || layer.y != 0 || overlay.width != @canvas.width || overlay.height != @canvas.height
             # embed(x, y, width, height, extend: :background, background: [0,0,0,0])
             # We want the resulting image to be @canvas.width x @canvas.height
@@ -183,6 +177,8 @@ module Silk
 
       def load_layer(layer)
         source = layer.source
+        return @source_cache[source] if @source_cache[source]
+
         # TODO: Handle missing files, etc.
         img = Vips::Image.new_from_file(source)
         
@@ -191,6 +187,7 @@ module Silk
           img = img.bandjoin(255)
         end
        
+        @source_cache[source] = img
         img
       end
     end
