@@ -12,7 +12,7 @@ class FeaturesTest < Minitest::Test
   def test_basic_rendering
     output = "test_render_basic.png"
     Silk.render(output, size: [800, 600]) do
-      layer "base.png"
+      layer "test/assets/base.png"
     end
     
     assert File.exist?(output)
@@ -26,14 +26,14 @@ class FeaturesTest < Minitest::Test
     output = "test_render_transforms.png"
     # Test resize and position
     Silk.render(output, size: [800, 600]) do
-      layer "base.png", width: 800, height: 600 # Implicit fill/stretch if logic implies? No, implementation default is contain?
+      layer "test/assets/base.png", width: 800, height: 600 # Implicit fill/stretch if logic implies? No, implementation default is contain?
       # Wait, default fit is nil -> 'resize' logic above might default to thumbnail which is contain.
       
       # Explicit test for cover
-      layer "blue_square.png", width: 100, height: 50, fit: :cover, x: 50, y: 50
+      layer "test/assets/blue_square.png", width: 100, height: 50, fit: :cover, x: 50, y: 50
       
       # Explicit test for fill/stretch
-      layer "base.png", width: 100, height: 50, fit: :fill, x: 200, y: 50
+      layer "test/assets/base.png", width: 100, height: 50, fit: :fill, x: 200, y: 50
     end
 
     assert File.exist?(output)
@@ -43,8 +43,8 @@ class FeaturesTest < Minitest::Test
   def test_blend_modes
     output = "test_render_blend.png"
     Silk.render(output, size: [500, 500]) do
-      layer "base.png" # Red
-      layer "blue_square.png", blend: :multiply
+      layer "test/assets/base.png" # Red
+      layer "test/assets/blue_square.png", blend: :multiply
     end
 
     assert File.exist?(output)

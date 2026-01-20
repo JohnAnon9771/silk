@@ -6,9 +6,7 @@ class TrimTest < Minitest::Test
     
     # Create an image with a central red square and transparent borders
     # 500x500 image, 100x100 red square in middle
-    @trim_source = "trim_test_source.png"
-    
-    @trim_source = "trim_test_source.png"
+    @trim_source = "test/assets/trim_test_source.png"
     
     # Red square 100x100
     square = Vips::Image.black(100, 100, bands: 3).linear([1], [255,0,0]).bandjoin(255)
@@ -31,7 +29,7 @@ class TrimTest < Minitest::Test
     # If we didn't trim, it would be the 500x500 image at 0,0 (centering the square at 200,200).
     
     Silk.render("output_trim.png", size: [200, 200]) do
-      layer "trim_test_source.png", trim: true, x: 0, y: 0
+      layer "test/assets/trim_test_source.png", trim: true, x: 0, y: 0
     end
     
     output = Vips::Image.new_from_file("output_trim.png")
@@ -47,7 +45,7 @@ class TrimTest < Minitest::Test
 
   def test_trim_disabled
     Silk.render("output_no_trim.png", size: [200, 200]) do
-      layer "trim_test_source.png", trim: false, x: 0, y: 0
+      layer "test/assets/trim_test_source.png", trim: false, x: 0, y: 0
     end
     
     output = Vips::Image.new_from_file("output_no_trim.png")

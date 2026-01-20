@@ -11,7 +11,7 @@ class FiltersTest < Minitest::Test
 
   def test_blur
     Silk.render(@output, size: [200, 200]) do
-      layer "base.png" do
+      layer "test/assets/base.png" do
         blur radius: 5
       end
     end
@@ -20,7 +20,7 @@ class FiltersTest < Minitest::Test
   
   def test_grayscale
     Silk.render(@output, size: [200, 200]) do
-      layer "base.png" do
+      layer "test/assets/base.png" do
         grayscale
       end
     end
