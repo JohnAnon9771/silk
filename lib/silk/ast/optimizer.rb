@@ -1,55 +1,64 @@
+require_relative 'visitor'
+
 module Silk
   module AST
-    class Optimizer
+    class Optimizer < Visitor
       def initialize(canvas)
         @canvas = canvas
+        @width_stack = []
+        @height_stack = []
       end
 
       def call
-        # Start with canvas dimensions
-        w = @canvas.width
-        h = @canvas.height
-        
-        @canvas.children.map! { |child| optimize_node(child, w, h) }
-        @canvas.children.compact!
+        visit(@canvas)
         @canvas
       end
 
-      private
-
-      def optimize_node(node, parent_width, parent_height)
-        # Deep copy or modify? ideally return new tree.
-        # For MVP, let's modify in place or just return the node if no changes.
+      def visit_canvas(node)
+        @width_stack.push(node.width)
+        @height_stack.push(node.height)
         
-        # Optimize children first
-        node.children.map! { |child| optimize_node(child, parent_width, parent_height) }
-        node.children.compact! # Remove pruned nodes
-
-        # Apply node-specific optimizations
-        case node
-        when Layer
-          optimize_layer(node, parent_width, parent_height)
-        when Canvas
-           # Canvas defines the root dimensions for its children
-           # Children handled above via recursion on node.children
-           nil 
-        else
-          node
+        # Optimize children
+        # We use map! to allow replacing nodes (though prune is different)
+        # Standard visit iterates. Here we need to mutate the list.
+        
+        node.children.map! do |child| 
+          res = visit(child)
+          # If visit returns :prune (or nil), we should handle it. 
+          # But map! replaces. So let's return the node if ok, nil if prune.
+          res
         end
+        node.children.compact!
+
+        @width_stack.pop
+        @height_stack.pop
+        
+        node
       end
-      
-      def optimize_layer(layer, parent_w, parent_h)
+
+      def visit_layer(node)
+        parent_w = @width_stack.last
+        parent_h = @height_stack.last
+
         # Resolve Geometry
-        layer.properties[:x] = resolve_dim(layer.x, parent_w)
-        layer.properties[:y] = resolve_dim(layer.y, parent_h)
-        layer.properties[:width] = resolve_dim(layer.width, parent_w)
-        layer.properties[:height] = resolve_dim(layer.height, parent_h)
-        
+        node.properties[:x] = resolve_dim(node.x, parent_w)
+        node.properties[:y] = resolve_dim(node.y, parent_h)
+        node.properties[:width] = resolve_dim(node.width, parent_w)
+        node.properties[:height] = resolve_dim(node.height, parent_h)
+
+        # Recursively visit children (if layers had children)
+        # node.children... 
+
         # Prune if width/height are 0 (and explicitly set)
-        return nil if layer.width == 0 || layer.height == 0
-        
-        layer
+        return nil if node.width == 0 || node.height == 0
+
+        # Optimize effects?
+        # node.effects.each { |e| visit(e) }
+
+        node
       end
+
+      private
       
       def resolve_dim(value, total)
         return value unless value.is_a?(String) && value.end_with?("%")

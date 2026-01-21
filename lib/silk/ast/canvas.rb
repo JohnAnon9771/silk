@@ -10,6 +10,10 @@ module Silk
       def height
         properties[:size][1]
       end
+
+      def accept(visitor)
+        visitor.visit_canvas(self)
+      end
     end
   end
 end

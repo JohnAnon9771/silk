@@ -12,6 +12,10 @@ module Silk
         @children << node
         node
       end
+
+      def accept(visitor)
+        visitor.visit_node(self)
+      end
     end
   end
 end

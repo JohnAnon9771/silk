@@ -46,6 +46,10 @@ module Silk
       def add_effect(effect)
         effects << effect
       end
+
+      def accept(visitor)
+        visitor.visit_layer(self)
+      end
     end
   end
 end
