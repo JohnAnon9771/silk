@@ -35,4 +35,25 @@ class OptimizerTest < Minitest::Test
     assert_equal 20, layer2.x
     assert_equal 50, layer2.y
   end
+
+  def test_effect_pruning
+    canvas = Silk::AST::Canvas.new(size: [100, 100])
+    layer = Silk::AST::Layer.new(source: "foo.png")
+    
+    # These should be removed
+    layer.add_effect(Silk::AST::Effects::Blur.new(radius: 0))
+    layer.add_effect(Silk::AST::Effects::Lighting.new(strength: 0))
+    layer.add_effect(Silk::AST::Effects::ColorAdjustment.new(brightness: 1.0, contrast: 1.0))
+    
+    # This should stay
+    layer.add_effect(Silk::AST::Effects::Blur.new(radius: 5))
+
+    canvas.add_child(layer)
+    
+    optimizer = Silk::AST::Optimizer.new(canvas)
+    optimizer.call
+    
+    assert_equal 1, layer.effects.size
+    assert_equal 5, layer.effects.first.radius
+  end
 end

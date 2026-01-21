@@ -1,5 +1,4 @@
 require_relative "../ast/node"
-require_relative "../ast/effects"
 
 module Silk
   module DSL
@@ -52,27 +51,27 @@ module Silk
       alias_method :blend_mode, :blend
 
       def displace(map:, scale: 20, **options)
-        effect = AST::DisplacementEffect.new(map: map, scale: scale, **options)
+        effect = AST::Effects::Displacement.new(map: map, scale: scale, **options)
         @layer.add_effect(effect)
       end
 
       def relight(map:, **options)
-        effect = AST::LightingEffect.new(map: map, **options)
+        effect = AST::Effects::Lighting.new(map: map, **options)
         @layer.add_effect(effect)
       end
 
       def blur(radius:)
-        effect = AST::BlurEffect.new(radius: radius)
+        effect = AST::Effects::Blur.new(radius: radius)
         @layer.add_effect(effect)
       end
 
       def grayscale
-        effect = AST::GrayscaleEffect.new
+        effect = AST::Effects::Grayscale.new
         @layer.add_effect(effect)
       end
 
       def adjust_color(**options)
-        effect = AST::ColorAdjustmentEffect.new(**options)
+        effect = AST::Effects::ColorAdjustment.new(**options)
         @layer.add_effect(effect)
       end      
     end

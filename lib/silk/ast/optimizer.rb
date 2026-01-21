@@ -40,21 +40,40 @@ module Silk
         parent_w = @width_stack.last
         parent_h = @height_stack.last
 
-        # Resolve Geometry
-        node.properties[:x] = resolve_dim(node.x, parent_w)
-        node.properties[:y] = resolve_dim(node.y, parent_h)
-        node.properties[:width] = resolve_dim(node.width, parent_w)
-        node.properties[:height] = resolve_dim(node.height, parent_h)
+        # Resolve Geometry - Only if they are not already fixed integers
+        # (Though they might be relative strings)
+        node.properties[:x] = resolve_dim(node.x, parent_w) if node.x.is_a?(String)
+        node.properties[:y] = resolve_dim(node.y, parent_h) if node.y.is_a?(String)
+        node.properties[:width] = resolve_dim(node.width, parent_w) if node.width.is_a?(String)
+        node.properties[:height] = resolve_dim(node.height, parent_h) if node.height.is_a?(String)
 
-        # Recursively visit children (if layers had children)
-        # node.children... 
-
-        # Prune if width/height are 0 (and explicitly set)
+        # Prune if width/height are 0
         return nil if node.width == 0 || node.height == 0
 
-        # Optimize effects?
-        # node.effects.each { |e| visit(e) }
+        # Optimize effects
+        if node.effects.any?
+          node.effects.map! { |effect| visit(effect) }
+          node.effects.compact!
+        end
 
+        node
+      end
+
+      # No-op optimizations for effects
+      
+      def visit_blur_effect(node)
+        node.radius <= 0 ? nil : node
+      end
+
+      def visit_color_adjustment_effect(node)
+        node.brightness == 1.0 && node.contrast == 1.0 ? nil : node
+      end
+
+      def visit_lighting_effect(node)
+        node.strength <= 0 ? nil : node
+      end
+
+      def visit_effect(node)
         node
       end
 
@@ -63,8 +82,7 @@ module Silk
       def resolve_dim(value, total)
         return value unless value.is_a?(String) && value.end_with?("%")
         
-        percent = value.to_f / 100.0
-        (total * percent).round
+        (total * (value.to_f / 100.0)).round
       end
     end
   end

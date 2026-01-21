@@ -10,7 +10,7 @@ module Silk
         # In MVP, we assume the outer block defines a canvas-like structure
         # or we wrapp it. For the prompt example: Silk.render "file", size: [w, h] do ...
         # The options contain size.
-        
+
         canvas = AST::Canvas.new(size: @options[:size])
         CanvasBuilder.new(canvas).evaluate(&@block)
         canvas
@@ -46,11 +46,9 @@ module Silk
       private
 
       def add_layer(source, options, &block)
-        # options now includes :blend if passed
-        
         node = AST::Layer.new(source: source, **options)
         @canvas.add_child(node)
-        
+
         # Evaluate block with LayerBuilder if provided
         if block_given?
           LayerBuilder.new(node).evaluate(&block)
