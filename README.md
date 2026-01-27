@@ -21,10 +21,10 @@ Silk is a modern wrapper around `libvips` that introduces a **Smart DSL** for co
 ## 🚀 Key Features
 
 - **High Performance**: Built on `libvips` with a custom Batch Composition engine that flattens operations into a single efficient pipeline.
+- **Hierarchical Groups**: Nest layers and groups to create complex layouts with shared effects.
 - **Intelligent DSL**: Declarative, block-based syntax. Define properties naturally without complex argument lists.
-- **Smart Geometry**: Support for relative values (e.g., `width "50%"`, `x :center`).
-- **Reusable Styles**: Define `styles` (macros) once and apply them effortlessly across your layouts.
 - **AST Optimizer**: An intermediate layer that prunes invisible layers and pre-calculates geometry before rendering.
+- **Extensible Effects**: Dynamic registry to add your own image processing strategies.
 
 ## 📦 Installation
 
@@ -42,7 +42,47 @@ bundle install
 
 ## 🛠 Usage
 
-### 1. The Smart DSL
+### 1. Generating Images
+
+Silk offers two ways to get your results: `render` (write to file) and `generate` (get a `Vips::Image` object).
+
+#### Render to file
+
+```ruby
+Silk.render("output.png", size: [1200, 630]) do
+  layer "background.jpg"
+end
+```
+
+#### Generate in-memory (Web Servers / Testing)
+
+```ruby
+# Returns a Vips::Image object
+image = Silk.generate(size: [1200, 630]) do
+  layer "background.jpg"
+end
+
+# Get binary buffer for HTTP response or S3
+buffer = image.write_to_buffer(".png")
+```
+
+### 2. Hierarchical Groups
+
+Group layers to apply effects or positioning to a set of nodes collectively.
+
+```ruby
+Silk.render("banner.png", size: [800, 400]) do
+  group x: 50, y: 50 do
+    layer "icon.png", width: 50
+    layer "text.png", x: 60
+
+    # Apply blur to the entire group
+    blur radius: 2
+  end
+end
+```
+
+### 3. The Smart DSL
 
 Forget about complex argument lists. Describe your image layout naturally:
 
@@ -66,7 +106,7 @@ Silk.render("output.png", size: [1200, 630]) do
 end
 ```
 
-### 2. Reusable Styles
+### 4. Reusable Styles
 
 Define common looks and apply them anywhere.
 
@@ -86,14 +126,25 @@ Silk.render("post.png", size: [1000, 1000]) do
 end
 ```
 
+### 5. Custom Effects & Registry
+
+Silk is extensible. You can register your own `libvips` processors:
+
+```ruby
+# Register a custom effect
+Silk.register_effect(MyCustomEffectClass, ->(img, effect_node) {
+  img.my_vips_operation(effect_node.param)
+})
+```
+
 ## ⚡ Performance
 
 Silk is designed for scale. Leveraging `libvips`' streaming architecture and our proprietary AST optimization, Silk delivers exceptional throughput:
 
 | Complexity                    | Throughput (M1) |
 | :---------------------------- | :-------------- |
-| Simple Composites             | ~65 images/sec  |
-| Complex (5+ layers + effects) | ~55 images/sec  |
+| Simple Composites             | ~70 images/sec  |
+| Complex (5+ layers + effects) | ~60 images/sec  |
 
 ## 🗺 Roadmap
 

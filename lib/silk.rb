@@ -13,15 +13,15 @@ module Silk
   loader.setup
 
   class << self
-    def render(output_path, **options, &block)
-      # Entry point for the DSL
+    def generate(**options, &block)
       canvas = DSL::PipelineBuilder.new(options, &block).build
-
-      # Optimize AST
       canvas = AST::Optimizer.new(canvas).call
+      Engine::VipsBackend.new(canvas).call
+    end
 
-      output_image = Engine::VipsBackend.new(canvas).call
-      output_image.write_to_file(output_path)
+    def render(output_path, **options, &block)
+      image = generate(**options, &block)
+      image.write_to_file(output_path)
     end
 
     def styles
