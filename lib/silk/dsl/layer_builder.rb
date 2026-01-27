@@ -73,7 +73,22 @@ module Silk
       def adjust_color(**options)
         effect = AST::Effects::ColorAdjustment.new(**options)
         @layer.add_effect(effect)
-      end      
+      end
+
+      # Nested structure support
+      def layer(source, **options, &block)
+        node = AST::Layer.new(source: source, **options)
+        @layer.add_child(node)
+        LayerBuilder.new(node).evaluate(&block) if block_given?
+        node
+      end
+
+      def group(**options, &block)
+        node = AST::Group.new(options)
+        @layer.add_child(node)
+        LayerBuilder.new(node).evaluate(&block) if block_given?
+        node
+      end
     end
   end
 end

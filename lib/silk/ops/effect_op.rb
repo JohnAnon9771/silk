@@ -3,15 +3,6 @@ require_relative "base"
 module Silk
   module Ops
     class EffectOp < Base
-      EFFECTS = {
-        AST::Effects::Blur => ->(img, effect) { img.gaussblur(effect.radius) },
-        AST::Effects::ColorAdjustment => ->(img, effect) {
-           gain = effect.contrast * effect.brightness
-           img.linear([gain], [0])
-        },
-        AST::Effects::Grayscale => ->(img, effect) { grayscale(img, effect) }
-      }.freeze
-
       attr_reader :effect_node
 
       def initialize(input:, effect_node:)
@@ -21,19 +12,12 @@ module Silk
 
       def call(context = nil)
         img = @input.call(context)
+        processor = Silk.effects[@effect_node.class]
 
-        EFFECTS[@effect_node] || img
-      end
-
-      private
-
-      def grayscale(img, effect)
-        if img.has_alpha?
-          alpha = img.extract_band(img.bands - 1)
-          rgb = img.extract_band(0, n: img.bands - 1)
-          rgb.colourspace(:b_w).bandjoin(alpha)
+        if processor
+          processor.call(img, @effect_node)
         else
-          img.colourspace(:b_w)
+          img
         end
       end
     end

@@ -59,6 +59,32 @@ module Silk
         node
       end
 
+      def visit_group(node)
+        parent_w = @width_stack.last
+        parent_h = @height_stack.last
+
+        node.properties[:x] = resolve_dim(node.x, parent_w) if node.x.is_a?(String)
+        node.properties[:y] = resolve_dim(node.y, parent_h) if node.y.is_a?(String)
+        node.properties[:width] = resolve_dim(node.width, parent_w) if node.width.is_a?(String)
+        node.properties[:height] = resolve_dim(node.height, parent_h) if node.height.is_a?(String)
+
+        @width_stack.push(node.width || parent_w)
+        @height_stack.push(node.height || parent_h)
+
+        node.children.map! { |child| visit(child) }
+        node.children.compact!
+
+        @width_stack.pop
+        @height_stack.pop
+
+        if node.effects.any?
+          node.effects.map! { |effect| visit(effect) }
+          node.effects.compact!
+        end
+
+        node
+      end
+
       # No-op optimizations for effects
       
       def visit_blur_effect(node)

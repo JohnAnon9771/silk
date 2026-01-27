@@ -31,5 +31,15 @@ module Silk
     def define_style(name, &block)
       styles[name] = block
     end
+
+    def effects
+      @effects ||= {}
+    end
+
+    def register_effect(klass, processor)
+      effects[klass] = processor
+    end
   end
 end
+
+Silk::EffectsRegistration.register_defaults

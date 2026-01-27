@@ -43,6 +43,16 @@ module Silk
         add_layer(source, options.merge(role: :artwork), &block)
       end
 
+      def group(**options, &block)
+        node = AST::Group.new(options)
+        @canvas.add_child(node)
+
+        if block_given?
+          LayerBuilder.new(node).evaluate(&block)
+        end
+        node
+      end
+
       private
 
       def add_layer(source, options, &block)

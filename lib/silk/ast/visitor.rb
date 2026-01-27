@@ -18,6 +18,10 @@ module Silk
         visit_node(node)
       end
 
+      def visit_group(node)
+        visit_node(node)
+      end
+
       def visit_effect(node)
         # Effects usually don't have children, but if they did:
         visit_node(node)

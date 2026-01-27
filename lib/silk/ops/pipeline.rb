@@ -3,12 +3,13 @@ require_relative "base"
 module Silk
   module Ops
     class Pipeline < Base
-      attr_reader :layers, :background_width, :background_height
+      attr_reader :layers, :background_width, :background_height, :transparent
 
-      def initialize(background_width:, background_height:)
+      def initialize(background_width:, background_height:, transparent: false)
         super(input: nil)
         @background_width = background_width
         @background_height = background_height
+        @transparent = transparent
         @layers = [] # Array of { op: Op, x: int, y: int, blend: symbol }
       end
 
@@ -21,7 +22,9 @@ module Silk
           @background_width,
           @background_height,
           bands: 3
-        ).copy(interpretation: :srgb).bandjoin(255)
+        ).copy(interpretation: :srgb)
+        
+        bg = @transparent ? bg.bandjoin(0) : bg.bandjoin(255)
 
         overlays = []
         modes = []
