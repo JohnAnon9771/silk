@@ -2,10 +2,9 @@ require "test_helper"
 
 class GroupsTest < Minitest::Test
   def test_nested_groups_and_effects
-    output_path = "test/tmp/groups_output.png"
-    FileUtils.mkdir_p("test/tmp")
+    reference = "test/assets/references/groups_output.png"
 
-    Silk.render output_path, size: [400, 400] do
+    image = Silk.generate(size: [400, 400]) do
       group x: 50, y: 50 do
         layer "test/assets/blue_square.png", width: 100, height: 100
         layer "test/assets/blue_square.png", x: 20, y: 20, width: 100, height: 100 do
@@ -21,6 +20,6 @@ class GroupsTest < Minitest::Test
       end
     end
 
-    assert File.exist?(output_path)
+    assert_image_similar(reference, image)
   end
 end

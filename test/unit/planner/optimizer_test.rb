@@ -1,4 +1,4 @@
-require_relative "test_helper"
+require "test_helper"
 require "silk/ops/load"
 require "silk/ops/resize"
 require "silk/ops/trim"
@@ -11,7 +11,7 @@ class PlannerOptimizerTest < Minitest::Test
     resize_op = Silk::Ops::Resize.new(input: load_op, width: 100, height: 100, fit: :cover)
     
     optimizer = Silk::Planner::Optimizer.new
-    optimized_op = optimizer.optimize(resize_op)
+    optimizer.optimize(resize_op)
     
     # Check if target dimensions were pushed down to Load op
     assert_equal 100, load_op.target_width

@@ -1,4 +1,4 @@
-require_relative "test_helper"
+require "test_helper"
 require "silk/ops/load"
 
 class CachingTest < Minitest::Test
